@@ -1,0 +1,24 @@
+{
+  "name": "/",
+  "type": "dir",
+  "children": [
+    {
+      "name": "readme.txt",
+      "type": "file",
+      "encoding": "text",
+      "content": "эмулятор оболочки\nвариант 2\n"
+    },
+    {
+      "name": "notes.txt",
+      "type": "file",
+      "encoding": "text",
+      "content": "первая строка\nвторая строка\n"
+    },
+    {
+      "name": "logo.bin",
+      "type": "file",
+      "encoding": "base64",
+      "content": "AAECAwQFBgcICQoLDA0ODw=="
+    }
+  ]
+}

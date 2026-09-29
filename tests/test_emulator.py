@@ -3,10 +3,15 @@ import os
 import tempfile
 import unittest
 
-from src.errors import ExitRequest, ScriptError
+from src.errors import ExitRequest, ScriptError, VfsError
 from src.main import _parse_args
 from src.parser import parse
 from src.shell import Shell
+from src.vfs import Vfs, node_from_dict
+
+MIN_PATH = os.path.join("tests", "data", "vfs_min.json")
+FILES_PATH = os.path.join("tests", "data", "vfs_files.json")
+DEEP_PATH = os.path.join("tests", "data", "vfs_deep.json")
 
 
 def shell_with_output():
@@ -115,6 +120,76 @@ class ScriptTest(unittest.TestCase):
     def test_missing_file_is_reported(self):
         with self.assertRaises(ScriptError):
             self.shell.run_script("nosuch.vsh")
+
+
+class VfsTest(unittest.TestCase):
+    def test_minimal_vfs(self):
+        self.assertEqual(Vfs.load(MIN_PATH).root.names(), [])
+
+    def test_several_files(self):
+        root = Vfs.load(FILES_PATH).root
+        self.assertEqual(
+            root.names(), ["logo.bin", "notes.txt", "readme.txt"]
+        )
+
+    def test_three_levels(self):
+        root = Vfs.load(DEEP_PATH).root
+        docs = root.children["home"].children["user"].children["docs"]
+        self.assertIn("report.txt", docs.names())
+
+    def test_base64_content(self):
+        root = Vfs.load(FILES_PATH).root
+        self.assertEqual(root.children["logo.bin"].data, bytes(range(16)))
+
+    def test_missing_image(self):
+        with self.assertRaises(VfsError):
+            Vfs.load("tests/data/nosuch.json")
+
+    def test_broken_json(self):
+        path = script_file('{"name": "/", "type": "dir",')
+        with self.assertRaises(VfsError):
+            Vfs.load(path)
+        os.unlink(path)
+
+    def test_unknown_node_type(self):
+        with self.assertRaises(VfsError):
+            node_from_dict({"name": "/", "type": "socket"})
+
+    def test_invalid_base64(self):
+        with self.assertRaises(VfsError):
+            node_from_dict({"name": "a", "type": "file",
+                            "encoding": "base64", "content": "не-base64"})
+
+
+class VfsInitTest(unittest.TestCase):
+    def test_replaces_tree(self):
+        shell, _ = shell_with_output()
+        shell.vfs = Vfs.load(DEEP_PATH)
+        shell.vfs.source = None
+        shell.run_line("vfs-init")
+        self.assertIn("home", shell.vfs.root.names())
+
+    def test_rejects_arguments(self):
+        shell, stream = shell_with_output()
+        shell.run_line("vfs-init a")
+        self.assertIn("не поддерживаются", stream.getvalue())
+
+    def test_clears_physical_image(self):
+        path = script_file("{}")
+        Vfs.load(DEEP_PATH)
+        shell, _ = shell_with_output()
+        shell.vfs = Vfs.default(path)
+        shell.run_line("vfs-init")
+        reloaded = Vfs.load(path)
+        os.unlink(path)
+        self.assertEqual(reloaded.root.names(), ["home", "tmp"])
+
+    def test_image_is_not_modified_without_vfs_init(self):
+        before = open(DEEP_PATH, encoding="utf-8").read()
+        shell, _ = shell_with_output()
+        shell.vfs = Vfs.load(DEEP_PATH)
+        shell.run_line("ls")
+        self.assertEqual(open(DEEP_PATH, encoding="utf-8").read(), before)
 
 
 if __name__ == "__main__":

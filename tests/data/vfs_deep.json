@@ -1,0 +1,54 @@
+{
+  "name": "/",
+  "type": "dir",
+  "children": [
+    {
+      "name": "home",
+      "type": "dir",
+      "children": [
+        {
+          "name": "user",
+          "type": "dir",
+          "children": [
+            {
+              "name": "docs",
+              "type": "dir",
+              "children": [
+                {
+                  "name": "report.txt",
+                  "type": "file",
+                  "encoding": "text",
+                  "content": "отчёт\nо работе\n"
+                }
+              ]
+            },
+            {
+              "name": "hello.txt",
+              "type": "file",
+              "encoding": "text",
+              "content": "привет\nмир\n"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "etc",
+      "type": "dir",
+      "children": [
+        {
+          "name": "hostname",
+          "type": "file",
+          "encoding": "text",
+          "content": "emulator\n"
+        }
+      ]
+    },
+    {
+      "name": "kernel.bin",
+      "type": "file",
+      "encoding": "base64",
+      "content": "AAECA//+"
+    }
+  ]
+}

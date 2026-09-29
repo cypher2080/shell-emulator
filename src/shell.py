@@ -5,6 +5,7 @@ import sys
 from src.commands import COMMANDS
 from src.errors import CommandError, EmulatorError, ScriptError
 from src.parser import parse
+from src.vfs import Vfs
 
 HOME_ALIAS = "~"
 PROMPT_SUFFIX = "$ "
@@ -20,6 +21,12 @@ class Shell:
         self.output = output or sys.stdout
         self.user = getpass.getuser()
         self.host = socket.gethostname().split(".")[0]
+        self.vfs = Vfs.default(vfs_path)
+
+    def load_vfs(self):
+        if self.vfs_path:
+            self.vfs = Vfs.load(self.vfs_path)
+        self.write(DEBUG_PREFIX + "vfs узлов = " + str(self.vfs.root.count()))
 
     def prompt(self):
         return "{}@{}:{}{}".format(
